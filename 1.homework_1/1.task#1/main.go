@@ -109,23 +109,6 @@ func recordQuestions(file *os.File) ([]Quiz, error) {
 		question := line[:lastComma]
 		answer := line[lastComma+1:]
 
-		// record, err := reader.Read()
-		// if err != nil {
-		// 	if err == io.EOF {
-		// 		break
-		// 	}
-		// 	return nil, err
-		// }
-
-		// if len(record) < 2 {
-		// 	return nil, fmt.Errorf("incorrect record length: %v", record)
-		// }
-
-		// question := Quiz{
-		// 	Question: question,
-		// 	Answer:   answer,
-		// }
-
 		questions = append(questions, Quiz{
 			Question: question,
 			Answer:   answer,
@@ -137,8 +120,6 @@ func recordQuestions(file *os.File) ([]Quiz, error) {
 	}
 
 	return questions, nil
-
-	// questions = append(questions, question)
 }
 
 // read our csv file (open, read, close or somthing else if needed)
@@ -148,9 +129,6 @@ func readCSV(fileName string) ([]Quiz, error) {
 		panic(err)
 	}
 	defer file.Close()
-
-	// reader := csv.NewReader(file)
-	// reader.FieldsPerRecord = 3
 
 	return recordQuestions(file)
 }
