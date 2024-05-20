@@ -56,13 +56,13 @@ func main() {
 		})
 	}
 
-	result := workHard(questions)
+	result := runQuiz(questions)
 
 	fmt.Println(result)
 }
 
-// requst all user's answer from terminal, calculate results and return it
-func workHard(questions []Quiz) string {
+// requst all user's answers from terminal, calculate results and return it
+func runQuiz(questions []Quiz) string {
 	reader := bufio.NewReader(os.Stdin)
 
 	correctCounter := 0
@@ -94,7 +94,7 @@ func workHard(questions []Quiz) string {
 	return result
 }
 
-// record our questions and answers to struct Queze
+// record our questions and answers to struct Quiz
 func recordQuestions(file *os.File) ([]Quiz, error) {
 	var questions []Quiz
 	scanner := bufio.NewScanner(file)
