@@ -24,43 +24,6 @@ type Quiz struct {
 	Answer   string
 }
 
-func main() {
-
-	// you can choose filename like: go run main.go -file=yourfile.csv
-	// first arg is name of our flag
-	// second arg is standard file without flag
-	// third arg is description of flag
-	qustionsMix := flag.Bool("mix", false, "Mix the quiz questins")
-	fileName := flag.String("file", "problems.csv", "CSV file to read")
-	flag.Parse()
-
-	fileInfo, err := os.Stat(*fileName)
-	if err != nil {
-		panic(err)
-	}
-
-	if fileInfo.Size() > MaxFileSize {
-		fmt.Println("File is too large. Maximum allowed size is 2 GB.")
-		return
-	}
-
-	questions, err := readCSV(*fileName)
-	if err != nil {
-		panic(err)
-	}
-
-	if *qustionsMix {
-
-		rand.Shuffle(len(questions), func(i, j int) {
-			questions[i], questions[j] = questions[j], questions[i]
-		})
-	}
-
-	result := runQuiz(questions)
-
-	fmt.Println(result)
-}
-
 // requst all user's answers from terminal, calculate results and return it
 func runQuiz(questions []Quiz) string {
 	reader := bufio.NewReader(os.Stdin)
@@ -131,4 +94,40 @@ func readCSV(fileName string) ([]Quiz, error) {
 	defer file.Close()
 
 	return recordQuestions(file)
+}
+
+func main() {
+	// you can choose filename like: go run main.go -file=yourfile.csv
+	// first arg is name of our flag
+	// second arg is standard file without flag
+	// third arg is description of flag
+	qustionsMix := flag.Bool("mix", false, "Mix the quiz questins")
+	fileName := flag.String("file", "problems.csv", "CSV file to read")
+	flag.Parse()
+
+	fileInfo, err := os.Stat(*fileName)
+	if err != nil {
+		panic(err)
+	}
+
+	if fileInfo.Size() > MaxFileSize {
+		fmt.Println("File is too large. Maximum allowed size is 2 GB.")
+		return
+	}
+
+	questions, err := readCSV(*fileName)
+	if err != nil {
+		panic(err)
+	}
+
+	if *qustionsMix {
+
+		rand.Shuffle(len(questions), func(i, j int) {
+			questions[i], questions[j] = questions[j], questions[i]
+		})
+	}
+
+	result := runQuiz(questions)
+
+	fmt.Println(result)
 }
