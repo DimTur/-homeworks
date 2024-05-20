@@ -5,6 +5,7 @@ import (
 	"os"
 )
 
+// a function that deletes file with specified name
 func deleteFile(fileName string) {
 	err := os.Remove(fileName)
 	if err != nil {

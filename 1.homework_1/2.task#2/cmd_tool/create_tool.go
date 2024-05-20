@@ -5,6 +5,7 @@ import (
 	"os"
 )
 
+// a function that creates file with specified name
 func createFile(fileName string, overwrite bool) {
 	if _, err := os.Stat(fileName); err == nil {
 		if !overwrite {

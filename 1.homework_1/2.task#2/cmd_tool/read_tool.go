@@ -5,6 +5,7 @@ import (
 	"os"
 )
 
+// a function that reades file with specified name
 func readFile(fileName string) {
 	data, err := os.ReadFile(fileName)
 	if err != nil {
