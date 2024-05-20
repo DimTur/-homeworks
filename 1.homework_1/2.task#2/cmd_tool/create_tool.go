@@ -19,5 +19,5 @@ func createFile(fileName string, overwrite bool) {
 		return
 	}
 	defer file.Close()
-	fmt.Printf("File %s successfully created.\n", fileName)
+	fmt.Printf("File '%s' successfully created.\n", fileName)
 }
