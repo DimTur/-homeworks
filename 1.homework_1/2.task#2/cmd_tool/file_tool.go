@@ -32,11 +32,11 @@ func main() {
 		fmt.Println("		create --filename=<filename> --overwrite: Create a new file and overwrite fith the same name")
 	case "create":
 		createFileCmd.Parse(os.Args[2:])
-		fmt.Println("Use help command")
 		fmt.Println("filename:", *createFileName)
 		fmt.Println("overwrite:", *createFileNameOverwrite)
 		if *createFileName == "" {
 			fmt.Println("Please specify a filename to create")
+			fmt.Println("Use help command 'help'")
 			createFileCmd.PrintDefaults()
 			os.Exit(1)
 		}
