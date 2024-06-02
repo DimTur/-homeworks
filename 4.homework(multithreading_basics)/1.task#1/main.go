@@ -14,16 +14,18 @@ func main() {
 
 	dataChannel := make(chan string)
 	signalChannel := make(chan os.Signal, 1)
+	stopChannel := make(chan struct{})
 
 	signal.Notify(signalChannel, syscall.SIGINT, syscall.SIGTERM)
 
 	createFile(fileName)
 
 	go reader(dataChannel)
-	go writer(dataChannel, fileName)
+	go writer(dataChannel, fileName, stopChannel)
 
 	<-signalChannel
 	fmt.Println("Program completed successfully.")
+	close(stopChannel)
 	close(dataChannel)
 }
 
@@ -40,7 +42,7 @@ func reader(ch chan<- string) {
 	}
 }
 
-func writer(ch <-chan string, fileName string) {
+func writer(ch <-chan string, fileName string, stop <-chan struct{}) {
 	file, err := os.OpenFile(fileName, os.O_WRONLY|os.O_APPEND, 0644)
 	if err != nil {
 		fmt.Println("File not found: ", err)
@@ -48,10 +50,18 @@ func writer(ch <-chan string, fileName string) {
 	}
 	defer closeFile(file)
 
-	for input := range ch {
-		_, err := file.WriteString(input + "\n")
-		if err != nil {
-			fmt.Println("File writing error: ", err)
+	for {
+		select {
+		case input, ok := <-ch:
+			if !ok {
+				return
+			}
+			_, err := file.WriteString(input + "\n")
+			if err != nil {
+				fmt.Println("File writing error: ", err)
+				return
+			}
+		case <-stop:
 			return
 		}
 	}
