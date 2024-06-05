@@ -12,6 +12,9 @@ func IsEqualArrays[T comparable](arr1, arr2 []T) bool {
 	}
 
 	for _, val := range arr2 {
+		if count, exists := countMap[val]; !exists || count == 0 {
+			return false
+		}
 		countMap[val]--
 	}
 
@@ -29,12 +32,15 @@ func main() {
 	arr2 := []int{5, 4, 3, 2, 1}
 	arr3 := []int{1, 2, 2, 3, 4}
 	arr4 := []int{1, 2, 3, 4}
+	arr5 := []int{4, 2, 3, 1}
 
 	equal1 := IsEqualArrays(arr1, arr2)
 	equal2 := IsEqualArrays(arr1, arr3)
 	equal3 := IsEqualArrays(arr1, arr4)
+	equal4 := IsEqualArrays(arr5, arr4)
 
 	println(equal1) // Выведет true
 	println(equal2) // Выведет false
 	println(equal3) // Выведет false
+	println(equal4) // Выведет true
 }
