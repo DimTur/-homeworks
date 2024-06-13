@@ -32,7 +32,7 @@ type Database struct {
 func getDb(dbUrl string) Database {
 	file, err := os.Open(dbUrl)
 	if err != nil {
-		log.Fatal(err)
+		log.Fatalf("Failed to open file %s: %v", dbUrl, err)
 	}
 	defer file.Close()
 
@@ -40,7 +40,7 @@ func getDb(dbUrl string) Database {
 	var database Database
 	err = decoder.Decode(&database)
 	if err != nil {
-		log.Fatal(err)
+		log.Fatalf("Failed to decode JSON data: %v", err)
 	}
 	return database
 }
