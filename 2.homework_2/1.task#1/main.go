@@ -22,6 +22,9 @@ func sliceIntersections(slices ...[]int) []int {
 	}
 
 	for _, slice := range slices[1:] {
+		// if len(slice) == 0 {
+		// 	return []int{}
+		// }
 		temp := make(map[int]struct{})
 		for _, num := range slice {
 			if _, exists := setInter[num]; exists {
