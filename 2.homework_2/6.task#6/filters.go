@@ -15,10 +15,17 @@ func Filter[T any](subject string, subjectsGrade map[string]map[int][]T) map[int
 	return filtered
 }
 
-func Mean[IT, OT Number](grades []IT) OT {
-	var sum IT
-	for _, grade := range grades {
-		sum += grade
+func Reduce[T1, T2 any](s []T1, init T2, f func(T1, T2) T2) T2 {
+	r := init
+	for _, v := range s {
+		r = f(v, r)
 	}
+	return r
+}
+
+func Mean[IT, OT Number](grades []IT) OT {
+	sum := Reduce(grades, 0, func(a IT, b IT) IT {
+		return a + b
+	})
 	return OT(float64(sum) / float64(len(grades)))
 }
