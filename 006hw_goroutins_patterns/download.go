@@ -1,15 +1,22 @@
 package main
 
 import (
+	"context"
 	"fmt"
 	"io"
 	"net/http"
 	"os"
 	"sync"
+	"time"
 )
 
-func downloadImg(task DownloadTask) error {
-	response, err := http.Get(task.DownloadUrl)
+func downloadImg(ctx context.Context, task DownloadTask) error {
+	req, err := http.NewRequestWithContext(ctx, "GET", task.DownloadUrl, nil)
+	if err != nil {
+		return fmt.Errorf("file downloading failed %s: %v", task.DownloadUrl, err)
+	}
+
+	response, err := http.DefaultClient.Do(req)
 	if err != nil {
 		return fmt.Errorf("file downloading failed %s: %v", task.DownloadUrl, err)
 	}
@@ -31,7 +38,9 @@ func downloadImg(task DownloadTask) error {
 func worker(wg *sync.WaitGroup, tasks <-chan DownloadTask, results chan<- error) {
 	defer wg.Done()
 	for task := range tasks {
-		err := downloadImg(task)
+		ctx, cancel := context.WithTimeout(context.Background(), 1000*time.Millisecond)
+		err := downloadImg(ctx, task)
+		cancel()
 		results <- err
 	}
 }

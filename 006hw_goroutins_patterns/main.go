@@ -10,6 +10,7 @@ import (
 const (
 	workerCount = 8
 	outputDir   = "./downloads"
+	timeout     = 1000 * time.Millisecond
 )
 
 func main() {
@@ -29,7 +30,7 @@ func main() {
 		"https://picsum.photos/v2/list?page=3&limit=100",
 	}
 
-	// This is only true if limit=100 for each URL, otherwise we will have to write new logic..
+	// This is only true if limit=100 for each URL, otherwise we will have to write new logic.
 	totalTasks := len(apiUrls) * 100
 
 	apiResponsesChannel := make(chan []APIResponse, len(apiUrls))
