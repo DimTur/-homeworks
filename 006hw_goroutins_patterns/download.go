@@ -7,7 +7,6 @@ import (
 	"net/http"
 	"os"
 	"sync"
-	"time"
 )
 
 func downloadImg(ctx context.Context, task DownloadTask) error {
@@ -38,7 +37,7 @@ func downloadImg(ctx context.Context, task DownloadTask) error {
 func worker(wg *sync.WaitGroup, tasks <-chan DownloadTask, results chan<- error) {
 	defer wg.Done()
 	for task := range tasks {
-		ctx, cancel := context.WithTimeout(context.Background(), 1000*time.Millisecond)
+		ctx, cancel := context.WithTimeout(context.Background(), timeout)
 		err := downloadImg(ctx, task)
 		cancel()
 		results <- err
