@@ -7,23 +7,25 @@ type Number interface {
 }
 
 func Filter[T any](subject string, subjectsGrade map[string]map[int][]T) map[int][]T {
-	filtered := make(map[int][]T)
-
-	if grades, ok := subjectsGrade[subject]; ok {
-		for grade, gradeValues := range grades {
-			filtered[grade] = gradeValues
-		}
-	} else {
+	filtered, ok := subjectsGrade[subject]
+	if !ok {
 		fmt.Printf("Subject %s not found\n", subject)
+		return make(map[int][]T)
 	}
-
 	return filtered
 }
 
-func Mean[T Number](grades []T) float64 {
-	var sum T
-	for _, grade := range grades {
-		sum += grade
+func Reduce[T1, T2 any](s []T1, init T2, f func(T1, T2) T2) T2 {
+	r := init
+	for _, v := range s {
+		r = f(v, r)
 	}
-	return float64(sum) / float64(len(grades))
+	return r
+}
+
+func Mean[IT, OT Number](grades []IT) OT {
+	sum := Reduce(grades, 0, func(a IT, b IT) IT {
+		return a + b
+	})
+	return OT(float64(sum) / float64(len(grades)))
 }

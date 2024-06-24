@@ -4,11 +4,14 @@ func main() {
 	dbUrl := "../dz3.json"
 	dataBase := getDb(dbUrl)
 
-	subject1 := "Math"
-	subject2 := "Biology"
-	subject3 := "Geography"
+	var subjects []string
+	for _, object := range dataBase.Objects {
+		subjects = append(subjects, object.Name)
+	}
 
-	summaryTable(dataBase, subject1)
-	summaryTable(dataBase, subject2)
-	summaryTable(dataBase, subject3)
+	for _, sub := range subjects {
+		summaryTable(dataBase, sub, func(subject string, filteredGrades map[int][]int) {
+			printSummary(subject, filteredGrades)
+		})
+	}
 }

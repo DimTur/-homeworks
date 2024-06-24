@@ -65,13 +65,14 @@ func (n Numbers[T]) IsElement(e T) bool {
 
 // delete element from array by value
 func (n *Numbers[T]) RemoveByValue(e T) {
-	for i, v := range *n {
-		if v == e {
-			copy((*n)[:i], (*n)[i+1:])
-			*n = (*n)[:len(*n)-1]
-			return
+	j := 0
+	for _, v := range *n {
+		if v != e {
+			(*n)[j] = v
+			j++
 		}
 	}
+	*n = (*n)[:j]
 }
 
 // delete element from array by index
@@ -93,7 +94,7 @@ func main() {
 	fmt.Println("isElement elements:", nums.IsElement(1))
 
 	fmt.Println("Array before remove:", nums)
-	nums.RemoveByValue(8.111)
+	nums.RemoveByValue(2.2)
 	fmt.Println("Array after removing:", nums)
 
 	fmt.Println("Array before remove:", nums)

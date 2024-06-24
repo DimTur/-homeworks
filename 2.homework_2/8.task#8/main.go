@@ -12,6 +12,9 @@ func IsEqualArrays[T comparable](arr1, arr2 []T) bool {
 	}
 
 	for _, val := range arr2 {
+		if count, exists := countMap[val]; !exists || count == 0 {
+			return false
+		}
 		countMap[val]--
 	}
 

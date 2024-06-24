@@ -15,23 +15,18 @@ func sliceIntersections(slices ...[]int) []int {
 		setInter[num] = struct{}{}
 	}
 
-	sliceToSet := func(s []int) map[int]struct{} {
-		set := make(map[int]struct{})
-		for _, num := range s {
-			set[num] = struct{}{}
+	for _, slice := range slices[1:] {
+		if len(slice) == 0 {
+			return []int{}
 		}
-		return set
-	}
 
-	for _, s := range slices[1:] {
-		currentSet := sliceToSet(s)
-		newSet := make(map[int]struct{})
-		for num := range setInter {
-			if _, found := currentSet[num]; found {
-				newSet[num] = struct{}{}
+		temp := make(map[int]struct{})
+		for _, num := range slice {
+			if _, exists := setInter[num]; exists {
+				temp[num] = struct{}{}
 			}
 		}
-		setInter = newSet
+		setInter = temp
 	}
 
 	result := make([]int, 0, len(setInter))
@@ -39,6 +34,7 @@ func sliceIntersections(slices ...[]int) []int {
 		result = append(result, num)
 	}
 	sort.Ints(result)
+
 	return result
 }
 
@@ -46,8 +42,10 @@ func main() {
 	s1 := []int{1, 2, 3, 2}
 	s2 := []int{3, 2}
 	s3 := []int{}
+	s4 := []int{}
 
 	fmt.Println(sliceIntersections(s1))
 	fmt.Println(sliceIntersections(s1, s2))
 	fmt.Println(sliceIntersections(s1, s2, s3))
+	fmt.Println(sliceIntersections(s3, s4))
 }

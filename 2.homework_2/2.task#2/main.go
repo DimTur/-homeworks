@@ -12,8 +12,8 @@ type Candidate struct {
 
 func countVotes(s []string) map[string]int {
 	result := make(map[string]int)
-	for _, i := range s {
-		result[i] += 1
+	for _, v := range s {
+		result[v] += 1
 	}
 	return result
 }
