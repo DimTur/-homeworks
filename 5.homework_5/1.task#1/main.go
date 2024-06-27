@@ -6,15 +6,17 @@ import (
 	"time"
 )
 
-func RunProcessor(wg *sync.WaitGroup, prices []map[string]float64) {
+func RunProcessor(wg *sync.WaitGroup, mu *sync.Mutex, prices []map[string]float64) {
 	go func() {
 		defer wg.Done()
+		mu.Lock()
 		for _, price := range prices {
 			for key, value := range price {
 				price[key] = value + 1
 			}
 			fmt.Println(price)
 		}
+		mu.Unlock()
 	}()
 }
 
@@ -56,9 +58,10 @@ func main() {
 		fmt.Println(price)
 	}
 	wg := &sync.WaitGroup{}
+	mu := &sync.Mutex{}
 	wg.Add(3)
-	RunProcessor(wg, prices)
-	RunProcessor(wg, prices)
-	RunProcessor(wg, prices)
+	RunProcessor(wg, mu, prices)
+	RunProcessor(wg, mu, prices)
+	RunProcessor(wg, mu, prices)
 	wg.Wait()
 }
