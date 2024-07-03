@@ -43,7 +43,7 @@ func (mtv *MainTokenValidator) Validate(token string) bool {
 
 // MessageCache interface for message caching
 type MessageCache interface {
-	AddMessage(msg Message)
+	WriteMsgs2Cache(msg Message)
 	FlushToFiles()
 }
 
@@ -62,8 +62,8 @@ func NewMainMsgCache(validator TokenValidator) *MainMsgCache {
 	}
 }
 
-// AddMessage adds a message to the cache
-func (mmc *MainMsgCache) AddMessage(msg Message) {
+// WriteMsgs2Cache adds a message to the cache
+func (mmc *MainMsgCache) WriteMsgs2Cache(msg Message) {
 	mmc.mu.Lock()
 	defer mmc.mu.Unlock()
 
@@ -78,78 +78,50 @@ func closeFile(file *os.File) {
 	}
 }
 
-// func (mmc *MainMsgCache) RetryWrite2File(fileID string, messages []Message) {
-// 	filePath := fmt.Sprintf("%s.txt", fileID)
-// 	var success bool
+func (mmc *MainMsgCache) RetryWrite2File(fileID string, messages []Message) error {
+	const maxRetries = 5
+	const baseDelay = 3 * time.Second
 
-// 	for retry := 0; retry < 5; retry++ {
-// 		success = true
+	filePath := fmt.Sprintf("%s.txt", fileID)
+	var lastErr error
 
-// 		file, err := os.OpenFile(filePath, os.O_WRONLY|os.O_APPEND|os.O_CREATE, 0644)
-// 		if err != nil {
-// 			fmt.Println("File not found or not created", err)
-// 			success = false
-// 			continue
-// 		}
+	for attempt := 1; attempt <= maxRetries; attempt++ {
+		file, err := os.OpenFile(filePath, os.O_WRONLY|os.O_APPEND|os.O_CREATE, 0644)
+		if err != nil {
+			lastErr = err
+			log.Printf("Attempt %d: failed to open or create file %s: %v", attempt, filePath, err)
+		}
+		defer closeFile(file)
 
-// 		for _, msg := range messages {
-// 			_, err := file.WriteString(msg.Data + "\n")
-// 			if err != nil {
-// 				log.Printf("Failed to write to file %s: %v\n", filePath, err)
-// 				success = false
-// 				break
-// 			}
-// 		}
-// 		closeFile(file)
+		for _, msg := range messages {
+			_, err := file.WriteString(msg.Data + "\n")
+			if err != nil {
+				lastErr = err
+				log.Printf("Attempt %d: failed to write to file %s: %v", attempt, filePath, err)
+				break
+			}
+		}
+		if lastErr == nil {
+			return nil
+		}
 
-// 		if success {
-// 			break
-// 		}
+		time.Sleep(baseDelay * time.Duration(1<<uint(attempt-1)))
+	}
 
-// 		log.Printf("Retrying to write to file %s (attemt %d)\n", filePath, retry+1)
-// 		time.Sleep(10 * time.Second)
-// 	}
-
-// 	if success {
-// 		mmc.mu.Lock()
-// 		defer mmc.mu.Unlock()
-// 		delete(mmc.cache, fileID)
-// 	} else {
-// 		log.Printf("Failed to write to file %s after retries\n", filePath)
-// 	}
-// }
-
-// func (mmc *MainMsgCache) FlushToFiles() {
-// 	mmc.mu.Lock()
-// 	defer mmc.mu.Unlock()
-
-// 	for fileID, message := range mmc.cache {
-// 		go mmc.RetryWrite2File(fileID, message)
-// 	}
-// }
+	return fmt.Errorf("failed to write to file %s after %d attempts: %v", filePath, maxRetries, lastErr)
+}
 
 func (mmc *MainMsgCache) FlushToFiles() {
 	mmc.mu.Lock()
 	defer mmc.mu.Unlock()
 
-	for fileID, messages := range mmc.cache {
-		filePath := fmt.Sprintf("%s.txt", fileID)
-
-		file, err := os.OpenFile(filePath, os.O_WRONLY|os.O_APPEND|os.O_CREATE, 0644)
+	for fileID, message := range mmc.cache {
+		err := mmc.RetryWrite2File(fileID, message)
 		if err != nil {
-			log.Println("File not found or not created", err)
-			continue
+			log.Printf("Failed to flush messages to file %s: %v", fileID, err)
+		} else {
+			delete(mmc.cache, fileID)
 		}
-
-		for _, msg := range messages {
-			_, err := file.WriteString(msg.Data + "\n")
-			if err != nil {
-				log.Printf("Failed to write to file %s: %v\n", filePath, err)
-			}
-		}
-		closeFile(file)
-
-		delete(mmc.cache, fileID)
 	}
 }
 
@@ -236,7 +208,7 @@ func main() {
 	for _, ch := range messageChannels {
 		go func(mc chan Message) {
 			for msg := range mc {
-				cache.AddMessage(msg)
+				cache.WriteMsgs2Cache(msg)
 				log.Println("added to cache:", msg)
 			}
 		}(ch)
