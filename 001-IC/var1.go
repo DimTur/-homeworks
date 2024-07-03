@@ -198,17 +198,20 @@ func main() {
 		messageChannels[i] = make(chan Message, 100)
 	}
 
+	// Handle context cancellation
 	ctx, stop := signal.NotifyContext(context.Background(), syscall.SIGINT, syscall.SIGTERM)
 	defer stop()
 
 	wg := &sync.WaitGroup{}
 
+	// Start worker goroutines
 	for i := 0; i < countWorkers; i++ {
 		wg.Add(1)
 		worker := NewWorker(cache.FlushToFiles, workerInterval)
 		go worker.Start(ctx, wg)
 	}
 
+	// Start goroutines for message channels
 	for _, ch := range messageChannels {
 		go func(mc chan Message) {
 			for msg := range mc {
@@ -218,9 +221,10 @@ func main() {
 		}(ch)
 	}
 
-	// Create users
+	// Simulate adding users and messages
 	go AddUsers(messageChannels, validTokens, numMsg)
 
+	// Wait for context cancellation
 	<-ctx.Done()
 	log.Println("Main: context done, waiting for worker to finish")
 
