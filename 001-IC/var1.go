@@ -78,6 +78,8 @@ func closeFile(file *os.File) {
 	}
 }
 
+// RetryWrite2File retries writing messages to a file with exponential backoff in case of failures.
+// It attempts multiple times and returns an error if unsuccessful after the maximum retries.
 func (mmc *MainMsgCache) RetryWrite2File(fileID string, messages []Message) error {
 	const maxRetries = 5
 	const baseDelay = 3 * time.Second
@@ -111,6 +113,8 @@ func (mmc *MainMsgCache) RetryWrite2File(fileID string, messages []Message) erro
 	return fmt.Errorf("failed to write to file %s after %d attempts: %v", filePath, maxRetries, lastErr)
 }
 
+// FlushToFiles flushes cached messages to respective files
+// It removes successfully flushed entries from the cache
 func (mmc *MainMsgCache) FlushToFiles() {
 	mmc.mu.Lock()
 	defer mmc.mu.Unlock()
