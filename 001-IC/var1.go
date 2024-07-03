@@ -9,7 +9,17 @@ import (
 	"sync"
 	"syscall"
 	"time"
+
+	"github.com/spf13/viper"
 )
+
+type Config struct {
+	WorkerInterval string   `mapstructure:"workerInterval"`
+	ValidTokens    []string `mapstructure:"validTokens"`
+	NumUsers       int      `mapstructure:"numUsers"`
+	NumMsg         int      `mapstructure:"numMsg"`
+	CountWorkers   int      `mapstructure:"countWorkers"`
+}
 
 type Message struct {
 	Token  string
@@ -182,18 +192,40 @@ func AddUsers(channels []chan Message, tokens []string, numMsg int) {
 	}
 }
 
+// getConfig load project settings from .yaml file
+func getConfig() (*Config, error) {
+	var config Config
+	viper.SetConfigFile("config.yaml")
+	err := viper.ReadInConfig()
+	if err != nil {
+		return nil, fmt.Errorf("failed to read config file: %w", err)
+	}
+	err = viper.Unmarshal(&config)
+	if err != nil {
+		return nil, fmt.Errorf("failed to decode config: %w", err)
+	}
+
+	return &config, nil
+}
+
 func main() {
 	// Config
-	workerInterval := 2 * time.Second
-	validTokens := []string{"token1", "token2", "token3"}
-	numUsers := 3
-	numMsg := 10
-	countWorkers := 2
+	config, err := getConfig()
+	if err != nil {
+		fmt.Println("Error loading config:", err)
+		return
+	}
 
-	validator := NewMainTokenValidator(validTokens)
+	workerInterval, err := time.ParseDuration(config.WorkerInterval)
+	if err != nil {
+		fmt.Printf("Error parsing worker interval: %v\n", err)
+		return
+	}
+
+	validator := NewMainTokenValidator(config.ValidTokens)
 	cache := NewMainMsgCache(validator)
 
-	messageChannels := make([]chan Message, numUsers)
+	messageChannels := make([]chan Message, config.NumUsers)
 	for i := range messageChannels {
 		messageChannels[i] = make(chan Message, 100)
 	}
@@ -205,7 +237,7 @@ func main() {
 	wg := &sync.WaitGroup{}
 
 	// Start worker goroutines
-	for i := 0; i < countWorkers; i++ {
+	for i := 0; i < config.CountWorkers; i++ {
 		wg.Add(1)
 		worker := NewWorker(cache.FlushToFiles, workerInterval)
 		go worker.Start(ctx, wg)
@@ -222,7 +254,7 @@ func main() {
 	}
 
 	// Simulate adding users and messages
-	go AddUsers(messageChannels, validTokens, numMsg)
+	go AddUsers(messageChannels, config.ValidTokens, config.NumMsg)
 
 	// Wait for context cancellation
 	<-ctx.Done()

@@ -1,0 +1,8 @@
+workerInterval: 2s
+validTokens:
+  - token1
+  - token2
+  - token3
+numUsers: 3
+numMsg: 10
+countWorkers: 2
