@@ -78,66 +78,17 @@ func closeFile(file *os.File) {
 	}
 }
 
-func (mmc *MainMsgCache) RetryWrite2File(fileID string, messages []Message) {
-	filePath := fmt.Sprintf("%s.txt", fileID)
-	var success bool
+// func (mmc *MainMsgCache) RetryWrite2File(fileID string, messages []Message) {
+// 	filePath := fmt.Sprintf("%s.txt", fileID)
+// 	var success bool
 
-	for retry := 0; retry < 5; retry++ {
-		success = true
-
-		file, err := os.OpenFile(filePath, os.O_WRONLY|os.O_APPEND|os.O_CREATE, 0644)
-		if err != nil {
-			fmt.Println("File not found or not created", err)
-			success = false
-			continue
-		}
-
-		for _, msg := range messages {
-			_, err := file.WriteString(msg.Data + "\n")
-			if err != nil {
-				log.Printf("Failed to write to file %s: %v\n", filePath, err)
-				success = false
-				break
-			}
-		}
-		closeFile(file)
-
-		if success {
-			break
-		}
-
-		log.Printf("Retrying to write to file %s (attemt %d)\n", filePath, retry+1)
-		time.Sleep(10 * time.Second)
-	}
-
-	if success {
-		mmc.mu.Lock()
-		defer mmc.mu.Unlock()
-		delete(mmc.cache, fileID)
-	} else {
-		log.Printf("Failed to write to file %s after retries\n", filePath)
-	}
-}
-
-func (mmc *MainMsgCache) FlushToFiles() {
-	mmc.mu.Lock()
-	defer mmc.mu.Unlock()
-
-	for fileID, message := range mmc.cache {
-		go mmc.RetryWrite2File(fileID, message)
-	}
-}
-
-// func (mmc *MainMsgCache) FlushToFiles() {
-// 	mmc.mu.Lock()
-// 	defer mmc.mu.Unlock()
-
-// 	for fileID, messages := range mmc.cache {
-// 		filePath := fmt.Sprintf("%s.txt", fileID)
+// 	for retry := 0; retry < 5; retry++ {
+// 		success = true
 
 // 		file, err := os.OpenFile(filePath, os.O_WRONLY|os.O_APPEND|os.O_CREATE, 0644)
 // 		if err != nil {
 // 			fmt.Println("File not found or not created", err)
+// 			success = false
 // 			continue
 // 		}
 
@@ -145,14 +96,62 @@ func (mmc *MainMsgCache) FlushToFiles() {
 // 			_, err := file.WriteString(msg.Data + "\n")
 // 			if err != nil {
 // 				log.Printf("Failed to write to file %s: %v\n", filePath, err)
+// 				success = false
+// 				break
 // 			}
-// 			continue
 // 		}
 // 		closeFile(file)
 
+// 		if success {
+// 			break
+// 		}
+
+// 		log.Printf("Retrying to write to file %s (attemt %d)\n", filePath, retry+1)
+// 		time.Sleep(10 * time.Second)
+// 	}
+
+// 	if success {
+// 		mmc.mu.Lock()
+// 		defer mmc.mu.Unlock()
 // 		delete(mmc.cache, fileID)
+// 	} else {
+// 		log.Printf("Failed to write to file %s after retries\n", filePath)
 // 	}
 // }
+
+// func (mmc *MainMsgCache) FlushToFiles() {
+// 	mmc.mu.Lock()
+// 	defer mmc.mu.Unlock()
+
+// 	for fileID, message := range mmc.cache {
+// 		go mmc.RetryWrite2File(fileID, message)
+// 	}
+// }
+
+func (mmc *MainMsgCache) FlushToFiles() {
+	mmc.mu.Lock()
+	defer mmc.mu.Unlock()
+
+	for fileID, messages := range mmc.cache {
+		filePath := fmt.Sprintf("%s.txt", fileID)
+
+		file, err := os.OpenFile(filePath, os.O_WRONLY|os.O_APPEND|os.O_CREATE, 0644)
+		if err != nil {
+			log.Println("File not found or not created", err)
+			continue
+		}
+
+		for _, msg := range messages {
+			_, err := file.WriteString(msg.Data + "\n")
+			if err != nil {
+				log.Printf("Failed to write to file %s: %v\n", filePath, err)
+			}
+		}
+		closeFile(file)
+
+		delete(mmc.cache, fileID)
+	}
+}
 
 // Worker executes a task at regular intervals
 type Worker struct {
@@ -179,7 +178,7 @@ func (w *Worker) Start(ctx context.Context, wg *sync.WaitGroup) {
 		case <-ctx.Done():
 			log.Println("Context done, executing task before exit")
 			w.task()
-			log.Println("Stoping flush to file:", ctx.Err())
+			log.Println("Stopping flush to file:", ctx.Err())
 			return
 		case <-ticker.C:
 			log.Println("Ticker ticked, executing task")
@@ -190,16 +189,20 @@ func (w *Worker) Start(ctx context.Context, wg *sync.WaitGroup) {
 
 // AddUsers simulates adding users and messages to message channels
 func AddUsers(channels []chan Message, tokens []string, numMsg int) {
-	for i := 1; i < numMsg; i++ {
+	for i := 1; i <= numMsg; i++ {
 		for user, ch := range channels {
 			msg := Message{
 				Token:  tokens[user],
-				FileID: fmt.Sprintf("file_%d.txt", user),
+				FileID: fmt.Sprintf("file_%d", user),
 				Data:   fmt.Sprintf("Message %d from user %d", i, user),
 			}
 			ch <- msg
 		}
-		time.Sleep(1000 * time.Millisecond)
+		time.Sleep(1 * time.Second)
+	}
+
+	for _, ch := range channels {
+		close(ch)
 	}
 }
 
@@ -234,7 +237,7 @@ func main() {
 		go func(mc chan Message) {
 			for msg := range mc {
 				cache.AddMessage(msg)
-				fmt.Println("added to cache:", msg)
+				log.Println("added to cache:", msg)
 			}
 		}(ch)
 	}
