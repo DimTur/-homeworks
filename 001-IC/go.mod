@@ -1,4 +1,4 @@
-module multi_user_rw_sys
+module github.com/DimTur/multi_user_rw_sys
 
 go 1.22.3
 
