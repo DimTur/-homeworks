@@ -1,6 +1,8 @@
 package validator
 
 // TokenValidator interface for token validation
+//
+//go:generate mockgen -source=validator.go -destination=validator_mock.go -package validator
 type TokenValidator interface {
 	Validate(token string) bool
 }

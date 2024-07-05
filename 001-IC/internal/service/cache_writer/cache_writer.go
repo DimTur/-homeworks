@@ -12,6 +12,8 @@ import (
 )
 
 // MessageCache interface for message caching
+//
+//go:generate mockgen -source=cache_writer.go -destination=cachewriter_mock.go -package cachewriter
 type MessageCache interface {
 	WriteMsgs2Cache(msg models.Message)
 	FlushToFiles()
@@ -19,26 +21,26 @@ type MessageCache interface {
 
 // MainMsgCache caches messages and flushes them to files
 type MainMsgCache struct {
-	mu        sync.RWMutex
-	cache     map[string][]models.Message
-	validator validator.TokenValidator
+	Mu        sync.RWMutex
+	Cache     map[string][]models.Message
+	Validator validator.TokenValidator
 }
 
 // NewMainMsgCache creates a new instance of MainMsgCache
 func NewMainMsgCache(validator validator.TokenValidator) *MainMsgCache {
 	return &MainMsgCache{
-		cache:     make(map[string][]models.Message),
-		validator: validator,
+		Cache:     make(map[string][]models.Message),
+		Validator: validator,
 	}
 }
 
 // WriteMsgs2Cache adds a message to the cache
 func (mmc *MainMsgCache) WriteMsgs2Cache(msg models.Message) {
-	mmc.mu.Lock()
-	defer mmc.mu.Unlock()
+	mmc.Mu.Lock()
+	defer mmc.Mu.Unlock()
 
-	if mmc.validator.Validate(msg.Token) {
-		mmc.cache[msg.FileID] = append(mmc.cache[msg.FileID], msg)
+	if mmc.Validator.Validate(msg.Token) {
+		mmc.Cache[msg.FileID] = append(mmc.Cache[msg.FileID], msg)
 	}
 }
 
@@ -86,15 +88,15 @@ func (mmc *MainMsgCache) RetryWrite2File(fileID string, messages []models.Messag
 // FlushToFiles flushes cached messages to respective files
 // It removes successfully flushed entries from the cache
 func (mmc *MainMsgCache) FlushToFiles() {
-	mmc.mu.Lock()
-	defer mmc.mu.Unlock()
+	mmc.Mu.Lock()
+	defer mmc.Mu.Unlock()
 
-	for fileID, message := range mmc.cache {
+	for fileID, message := range mmc.Cache {
 		err := mmc.RetryWrite2File(fileID, message)
 		if err != nil {
 			log.Printf("Failed to flush messages to file %s: %v", fileID, err)
 		} else {
-			delete(mmc.cache, fileID)
+			delete(mmc.Cache, fileID)
 		}
 	}
 }
