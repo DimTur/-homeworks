@@ -1,4 +1,6 @@
 workerInterval: 2s
+# indicating valid tokens in this location 
+# for demonstration purporses
 validTokens:
   - token1
   - token2
