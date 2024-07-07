@@ -5,21 +5,24 @@ import (
 	"bytes"
 	"fmt"
 	"os"
-	"sync"
 	"time"
 )
 
-type InefficientLogger struct{}
+type InefficientLogger struct {
+}
+
+func NewIneffectiveLogger() *InefficientLogger {
+	return &InefficientLogger{}
+}
 
 func (il *InefficientLogger) Info1(msg string) {
 	now := time.Now().Format("2006-01-02 15:04:05")
-	logMsg := fmt.Sprintf("%s INFO: %s\n", now, msg)
-	fmt.Print(logMsg)
+	logMsg := fmt.Sprintf("%s INFO: %s", now, msg)
+	fmt.Println(logMsg)
 }
 
 type EfficientLogger struct {
-	mu sync.Mutex
-	w  *bufio.Writer
+	w *bufio.Writer
 }
 
 func NewEfficientLogger() *EfficientLogger {
@@ -37,20 +40,6 @@ func (el *EfficientLogger) Info2(msg string) {
 	buffer.WriteString(msg)
 	buffer.WriteString("\n")
 
-	el.mu.Lock()
 	el.w.WriteString(buffer.String())
-	el.w.Flush() // Flush the buffer to ensure the message is written out
-	el.mu.Unlock()
-}
-
-func main() {
-	logger1 := &InefficientLogger{}
-	for i := 0; i < 1000; i++ {
-		logger1.Info1("info message")
-	}
-
-	logger2 := NewEfficientLogger()
-	for i := 0; i < 1000; i++ {
-		logger2.Info2("info message")
-	}
+	el.w.Flush()
 }

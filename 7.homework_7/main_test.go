@@ -3,7 +3,7 @@ package main
 import "testing"
 
 func BenchmarkInefficientLogger(b *testing.B) {
-	ilogger := &InefficientLogger{}
+	ilogger := NewIneffectiveLogger()
 	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
 		ilogger.Info1("InefficientLogger")
