@@ -7,7 +7,6 @@ import (
 	"time"
 )
 
-// worker, tokenvalidator, пакет работы с файлами
 // Worker executes a task at regular intervals
 type Worker struct {
 	task     func()
