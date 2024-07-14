@@ -63,8 +63,33 @@ func dFSMaxUtil(matrix [][]int, vertex int, visited []bool, maxGrade []int) int 
 	return maxWeight
 }
 
+// Function to calculate path weight for a custom sequence
 func calcUserGrade(matrix [][]int, userAnswer []int) int {
-	return 0
+	// Check that the custom sequence is not empty and has at least one vertex
+	if len(userAnswer) == 0 {
+		return 0
+	}
+
+	// Walk through the sequence and add up the weights of the edges
+	userGrade := 0
+	for i := 0; i < len(userAnswer)-1; i++ {
+		fromVert := userAnswer[i]
+		toVert := userAnswer[i+1]
+
+		// validation for range
+		if fromVert < 0 || fromVert >= len(matrix) || toVert < 0 || toVert >= len(matrix) {
+			return 0
+		}
+
+		// Check if there is an edge between the current vertices
+		if matrix[fromVert][toVert] == 0 {
+			return 0
+		}
+
+		userGrade += matrix[fromVert][toVert]
+	}
+
+	return userGrade
 }
 
 func main() {
@@ -75,6 +100,7 @@ func main() {
 		{0, 1, 0, 0, 0},
 		{0, 1, 0, 0, 0},
 	}
+	ua := []int{4, 1, 0, 2}
 
-	fmt.Println(calMaxGrade(mtx1))
+	fmt.Println(EvalSequence(mtx1, ua))
 }
