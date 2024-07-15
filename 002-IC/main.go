@@ -1,12 +1,69 @@
 package main
 
 import (
+	"errors"
 	"fmt"
 )
 
-func EvalSequence(matrix [][]int, userAnswer []int) int {
+// The mtxValidator function checks if the matrix is empty,
+// if it is square, if no loops, and if the matrix is symmetric
+func mtxValidator(matrix [][]int) error {
+	n := len(matrix)
+	if n == 0 {
+		return errors.New("matrix is empty")
+	}
 
-	// validation
+	for i := 0; i < n; i++ {
+		if len(matrix[i]) != n {
+			return errors.New("matrix is not square")
+		}
+		if matrix[i][i] != 0 {
+			return errors.New("matrix has loop")
+		}
+		for j := 0; j < n; j++ {
+			if matrix[i][j] != matrix[j][i] {
+				return errors.New("matrix is not symmetric")
+			}
+		}
+	}
+	return nil
+}
+
+// The uAnswerValidator function validates a user's answer
+// by ensuring it does not contain any duplicate values.
+func uAnswerValidator(userAnswer []int, matrix [][]int) error {
+	n := len(userAnswer)
+	m := len(matrix)
+	if n == 0 {
+		return nil
+	}
+
+	validMap := make(map[int]bool)
+	validMap[userAnswer[0]] = true
+
+	for i := 1; i < n; i++ {
+		if validMap[userAnswer[i]] {
+			return errors.New("the answer cannot contain duplicate values")
+		}
+		if userAnswer[i] >= m || userAnswer[i] < 0 {
+			return errors.New("the answer cannot contain value out of matrix range")
+		}
+		validMap[userAnswer[i]] = true
+	}
+
+	return nil
+}
+
+func EvalSequence(matrix [][]int, userAnswer []int) int {
+	if err := mtxValidator(matrix); err != nil {
+		fmt.Println("Matrix incorrect:", err)
+		return -1
+	}
+	if err := uAnswerValidator(userAnswer, matrix); err != nil {
+		fmt.Println("User answer incorrect:", err)
+		return -2
+	}
+
 	maxGrade := calMaxGrade(matrix)
 	userGrade := calcUserGrade(matrix, userAnswer)
 
@@ -76,16 +133,6 @@ func calcUserGrade(matrix [][]int, userAnswer []int) int {
 		fromVert := userAnswer[i]
 		toVert := userAnswer[i+1]
 
-		// validation for range
-		if fromVert < 0 || fromVert >= len(matrix) || toVert < 0 || toVert >= len(matrix) {
-			return 0
-		}
-
-		// Check if there is an edge between the current vertices
-		if matrix[fromVert][toVert] == 0 {
-			return 0
-		}
-
 		userGrade += matrix[fromVert][toVert]
 	}
 
@@ -100,7 +147,7 @@ func main() {
 		{0, 1, 0, 0, 0},
 		{0, 1, 0, 0, 0},
 	}
-	ua := []int{4, 1, 0, 2}
+	ua := []int{4, 1, 2, 5}
 
 	fmt.Println(EvalSequence(mtx1, ua))
 }
