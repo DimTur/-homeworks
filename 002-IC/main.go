@@ -18,7 +18,7 @@ type UserAnswerValidator struct {
 	matrix     [][]int
 }
 
-// The mtxValidator function checks if the matrix is empty,
+// Function checks if the matrix is empty,
 // if it is square, if no loops, and if the matrix is symmetric
 func (mv MatrixValidator) Validate() error {
 	n := len(mv.matrix)
@@ -42,7 +42,7 @@ func (mv MatrixValidator) Validate() error {
 	return nil
 }
 
-// The uAnswerValidator function validates a user's answer
+// Function validates a user's answer
 // by ensuring it does not contain any duplicate values.
 func (uav UserAnswerValidator) Validate() error {
 	n := len(uav.userAnswer)
