@@ -26,6 +26,8 @@ func (mv MatrixValidator) Validate() error {
 		return errors.New("matrix is empty")
 	}
 
+	hasPath := false
+
 	for i := 0; i < n; i++ {
 		if len(mv.matrix[i]) != n {
 			return errors.New("matrix is not square")
@@ -34,11 +36,19 @@ func (mv MatrixValidator) Validate() error {
 			return errors.New("matrix has loop")
 		}
 		for j := 0; j < n; j++ {
-			if mv.matrix[i][j] != mv.matrix[j][i] {
-				return errors.New("matrix is not symmetric")
+			if mv.matrix[i][j] < 0 {
+				return errors.New("matrix contains negative values")
+			}
+			if mv.matrix[i][j] > 0 {
+				hasPath = true
 			}
 		}
 	}
+
+	if !hasPath {
+		return errors.New("matrix contains no valid paths")
+	}
+
 	return nil
 }
 
@@ -51,17 +61,16 @@ func (uav UserAnswerValidator) Validate() error {
 		return nil
 	}
 
-	validMap := make(map[int]bool)
-	validMap[uav.userAnswer[0]] = true
+	validMap := make(map[int]interface{})
 
-	for i := 1; i < n; i++ {
-		if validMap[uav.userAnswer[i]] {
+	for i := 0; i < n; i++ {
+		if _, exists := validMap[uav.userAnswer[i]]; exists {
 			return errors.New("the answer cannot contain duplicate values")
 		}
 		if uav.userAnswer[i] >= m || uav.userAnswer[i] < 0 {
 			return errors.New("the answer cannot contain value out of matrix range")
 		}
-		validMap[uav.userAnswer[i]] = true
+		validMap[uav.userAnswer[i]] = struct{}{}
 	}
 
 	return nil
@@ -92,18 +101,18 @@ func EvalSequence(matrix [][]int, userAnswer []int) int {
 func calMaxGrade(matrix [][]int) int {
 	// init array to store max path weight for each vertex
 	visited := make([]bool, len(matrix))
-	maxGrade := make([]int, len(matrix))
+	maxPathWeight := 0
 
 	// calculate max path weight for each vertex
-	maxPathWeight := 0
 	for i := 0; i < len(matrix); i++ {
-		if maxGrade[i] == 0 { // only for unvisited vertices
-			dFSMaxUtil(matrix, i, visited, maxGrade)
+		if visited[i] {
+			continue
 		}
+		pathWeight := dFSMaxUtil(matrix, i, visited)
 
 		// update max path weight
-		if maxGrade[i] > maxPathWeight {
-			maxPathWeight = maxGrade[i]
+		if pathWeight > maxPathWeight {
+			maxPathWeight = pathWeight
 		}
 	}
 
@@ -111,11 +120,7 @@ func calMaxGrade(matrix [][]int) int {
 }
 
 // DFS helper function to calculate maximum path weight
-func dFSMaxUtil(matrix [][]int, vertex int, visited []bool, maxGrade []int) int {
-	// If the maximum path weight has already been calculated, return it
-	if maxGrade[vertex] != 0 {
-		return maxGrade[vertex]
-	}
+func dFSMaxUtil(matrix [][]int, vertex int, visited []bool) int {
 
 	visited[vertex] = true
 
@@ -123,7 +128,7 @@ func dFSMaxUtil(matrix [][]int, vertex int, visited []bool, maxGrade []int) int 
 	maxWeight := 0
 	for i := 0; i < len(matrix); i++ {
 		if matrix[vertex][i] > 0 && !visited[i] {
-			weight := matrix[vertex][i] + dFSMaxUtil(matrix, i, visited, maxGrade)
+			weight := matrix[vertex][i] + dFSMaxUtil(matrix, i, visited)
 			if weight > maxWeight {
 				maxWeight = weight
 			}
@@ -131,7 +136,6 @@ func dFSMaxUtil(matrix [][]int, vertex int, visited []bool, maxGrade []int) int 
 	}
 
 	// Store the maximum weight of the path from the current vertex
-	maxGrade[vertex] = maxWeight
 	visited[vertex] = false // Reset vivsit for other paths
 	return maxWeight
 }
@@ -157,13 +161,11 @@ func calcUserGrade(matrix [][]int, userAnswer []int) int {
 
 func main() {
 	mtx1 := [][]int{
-		{0, 2, 3, 0, 0},
-		{2, 0, 0, 1, 1},
-		{3, 0, 0, 0, 0},
-		{0, 1, 0, 0, 0},
-		{0, 1, 0, 0, 0},
+		{0, 0, 0},
+		{0, 0, 0},
+		{0, 0, 0},
 	}
-	ua := []int{4, 1, 2, 5}
+	ua := []int{0, 1, 2}
 
 	fmt.Println(EvalSequence(mtx1, ua))
 }
